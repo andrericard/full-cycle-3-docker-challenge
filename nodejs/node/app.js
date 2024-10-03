@@ -11,62 +11,27 @@ const config = {
   database: process.env.MYSQL_DB
 };
 
-let connection;
+const connection = mysql.createConnection(config);
 
-const connectToDatabase = (callback) => {
-  connection = mysql.createConnection(config);
-  connection.connect(err => {
-    if (err) {
-      return callback(false);
-    }
-    callback(true);
-  });
-};
+const createTable = `CREATE TABLE IF NOT EXISTS people (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL
+)`;
 
-const insertNamesAndFetch = (res) => {
-  const insertQuery = `INSERT INTO people (name) VALUES ('John'), ('Jane')`;
-  connection.query(insertQuery, (err) => {
-    if (err) throw err;
-    fetchPeople(res);
-  });
-};
+connection.query(createTable);
 
-const fetchPeople = (res) => {
-  connection.query('SELECT * FROM people', (err, rows) => {
-    if (err) throw err;
-    renderPeople(res, rows);
-  });
-};
-
-const renderPeople = (res, people = []) => {
-  let response = '<h1>Full Cycle Rocks!</h1><ul>';
-  people.forEach(person => {
-    response += `<li>${person.name}</li>`;
-  });
-  response += '</ul>';
-  res.send(response);
-};
+const insertQuery = `INSERT INTO people(name) VALUES('John'), ('Jane')`;
+connection.query(insertQuery);
 
 app.get('/', (req, res) => {
-  connectToDatabase(connected => {
-    if (!connected) {
-      return res.send('<h1>Database is starting, please try again in 10 seconds.</h1>');
-    }
-
-    const createTable = `CREATE TABLE IF NOT EXISTS people (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255))`;
-    connection.query(createTable, (err) => {
-      if (err) throw err;
-
-      connection.query('SELECT * FROM people', (err, rows) => {
-        if (err) throw err;
-
-        if (rows.length === 0) {
-          insertNamesAndFetch(res);
-        } else {
-          renderPeople(res, rows);
-        }
-      });
+  connection.query('SELECT * FROM people', (err, rows) => {
+    if (err) throw err;
+    let response = '<h1>Full Cycle Rocks!</h1><ul>';
+    rows.forEach(person => {
+      response += `<li>${person.name}</li>`;
     });
+    response += '</ul>';
+    res.send(response);
   });
 });
 

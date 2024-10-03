@@ -27,7 +27,8 @@ services:
       - MYSQL_PASSWORD=root
       - MYSQL_DB=people
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
 
   mysql:
     image: mysql:5.7
@@ -35,6 +36,11 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: people
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD" ]
+      interval: 5s
+      timeout: 10s
+      retries: 3
     volumes:
       - mysql-data:/var/lib/mysql
 
